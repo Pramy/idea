@@ -21,7 +21,9 @@
   mvn compile //编译
   mvn test   //测试
   mvn clean //清除target
-  mvn package //打包
+  mvn package //打包，输出到target
+  mvn install  // 安装到maven的repository
+  mvn dependency:tree  //查看依赖树
   ```
 
 
@@ -46,11 +48,46 @@
 
      moduleA依赖于moduleB：A-->B
 
+     A的pom配置：
+
+     ```xml
+             <dependency>
+                 <groupId>com.project</groupId>
+                 <artifactId>project.B</artifactId>
+                 <version>0.0.1-SNAPSHOT</version>
+             </dependency>
+     ```
+
+     B必须先安装到本地库，否则编译A时会抛异常
+
+     B: clean install --> A :clean compile
+
      A会依赖于B所依赖的module或者jar（传递性）
 
      **但是A不会依赖B中的scope为test的jar，B也不会依赖它所以来的module中的scope为test的jar **
 
   2. 间接接依赖
+
+    C添加对A的依赖，同时排除对B的依赖
+
+    ```xml
+    		<dependency>
+                <groupId>com.project</groupId>
+                <artifactId>project.B</artifactId>
+                <version>0.0.1-SNAPSHOT</version>
+                <exclusions>
+                  <exclusion>
+                        <groupId>com.project</groupId>
+                        <artifactId>project.A</artifactId>  
+                    <!--这里的exclusion里面可以是具体的一个module，也可以是具体的一个jar-->
+                  </exclusion>
+                </exclusions>
+            </dependency>
+        
+    ```
+
+    ​
+
     情况1：
     **user-core**->**log4j.jar** (version=1.2.17)
     **user-log** ->**log4j.jar**(version=1.2.0)
@@ -65,3 +102,37 @@
 
   **总结：最短路径原则和最先申明原则**
 
+
+
+#  继承与聚合的关系
+
+
+
+**假设目前有四个maven项目，分别是project.parent、project.A、project.B、project.C**
+
+**要求A、B、C整合到一个项目，并且从project.parent继承依赖**
+
+**1、parent聚合A、B、C三个项目**
+
+```xml
+<packaging>pom</packaging>
+<modules>
+<module>project.A</module>
+<module>project.B</module>
+<module>project.C</module>
+</modules>
+```
+
+**2、A、B、C分别关联parent项目**
+
+```xml
+	<parent>
+        <groupId>com.project</groupId>
+        <artifactId>project.parent</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+```
+
+- 子类会自动继承父类的dependency，父类的dependcyManagement依赖关系只是为了统一版本号，不会被子项目自动继承，除非子项目主动引用。
+- 对于聚合模块来说，它知道有哪些被聚合的模块，但那些被聚合的模块不知道这个聚合模块的存在。对于继承关系的父 POM来说，它不知道有哪些子模块继承与它，但那些子模块都必须知道自己的父 POM是什么
+- ​
