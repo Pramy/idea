@@ -44,33 +44,33 @@
 | system   | 指定不开源的jar或者非公开的jar。需要设置路径，不打包          |
 
 # 各个模块之间的依赖
-  1. 直接依赖 
+## 1.直接依赖 
 
-     moduleA依赖于moduleB：A-->B
+moduleA依赖于moduleB：A-->B
 
-     A的pom配置：
+A的pom配置：
 
-     ```xml
-             <dependency>
-                 <groupId>com.project</groupId>
-                 <artifactId>project.B</artifactId>
-                 <version>0.0.1-SNAPSHOT</version>
-             </dependency>
-     ```
+```xml
+        <dependency>
+             <groupId>com.project</groupId>
+             <artifactId>project.B</artifactId>
+             <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+```
 
-     B必须先安装到本地库，否则编译A时会抛异常
+B必须先安装到本地库，否则编译A时会抛异常
 
-     B: clean install --> A :clean compile
+B: clean install --> A :clean compile
 
-     A会依赖于B所依赖的module或者jar（传递性）
+A会依赖于B所依赖的module或者jar（传递性）
 
-     **但是A不会依赖B中的scope为test的jar，B也不会依赖它所以来的module中的scope为test的jar **
+**但是A不会依赖B中的scope为test的jar，B也不会依赖它所以来的module中的scope为test的jar **
 
-  2. 间接接依赖
+## 2.间接接依赖
 
-    C添加对A的依赖，同时排除对B的依赖
+C添加对A的依赖，同时排除对B的依赖
 
-    ```xml
+```xml
     		<dependency>
                 <groupId>com.project</groupId>
                 <artifactId>project.B</artifactId>
@@ -83,25 +83,20 @@
                   </exclusion>
                 </exclusions>
             </dependency>
-        
-    ```
+```
 
-    ​
+情况1：
+**user-core**->**log4j.jar** (version=1.2.17)
+**user-log** ->**log4j.jar**(version=1.2.0)
+**user-service**->**user-log** && **user-service**->**user-core**
+**user-service**会根据谁先写在pom文件的最前面
+![2](image/2.png)
+情况2：
+A-->B-->C-->X.jar(version=1.1)
+A-->D-->X.jar(version=1.2)
+结果就是A——>X.jar(version=1.2)
 
-    情况1：
-    **user-core**->**log4j.jar** (version=1.2.17)
-    **user-log** ->**log4j.jar**(version=1.2.0)
-    **user-service**->**user-log** && **user-service**->**user-core**
-    **user-service**会根据谁先写在pom文件的最前面
-    ![2](image/2.png)
-       情况2：
-    ​    A-->B-->C-->X.jar(version=1.1)
-    ​    A-->D-->X.jar(version=1.2)
-    ​    结果就是A——>X.jar(version=1.2)
-
-
-  **总结：最短路径原则和最先申明原则**
-
+**总结：最短路径原则和最先申明原则**
 
 
 #  继承与聚合的关系
@@ -183,6 +178,9 @@
 # 插件
 
 - source:一个用来打包的插件，可以打包java文件：`mvn source:jar`
-- 配置如图：![3](image/3.png)
-- 具体的架构跟```<dependencyManagement>``` 差不多，```<pluginManagement>```要写在build里面，然后声明```<plugins>```，然后再到具体```<plugin>```，```<plugin>```有gav，其中的```<execution>```(运行)可以用```<phase>```绑定生命周期，用```<goal>``` 绑定目标，其实就是执行的命令（具体目标可以在下载插件的网址可以看到），例如sources的：![4](image/4.png),     其实就相当于```mvn source:jar```。 然后到了```<configurartion>``` 这个是配置文件，给插件配置参数，具体能配一些什么要看原本的说明，或者查看源码：![5](image/5.png)
+- 配置如图：
+- ![3](image/3.png)
+- 具体的架构跟```<dependencyManagement>``` 差不多，```<pluginManagement>```要写在build里面，然后声明```<plugins>```，然后再到具体```<plugin>```，```<plugin>```有gav，其中的```<execution>```(运行)可以用```<phase>```绑定生命周期，用```<goal>``` 绑定目标，其实就是执行的命令（具体目标可以在下载插件的网址可以看到），例如sources的：其实就相当于```mvn source:jar```。
+  ![4](image/4.png),   
+  然后到了```<configurartion>``` 这个是配置文件，给插件配置参数，具体能配一些什么要看原本的说明，或者查看源码：![5](image/5.png)
 
